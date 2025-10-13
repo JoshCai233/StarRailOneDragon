@@ -62,7 +62,7 @@ class SimUniApp(SrApplication):
     def _check_points_reward(self) -> OperationRoundResult:
         last_count_14000 = -1
         # 默认设置找不到 14000 返回重试
-        result = self.round_retry('未找到积分奖励', wait=0.2)
+        result = self.round_retry('未找到积分奖励', wait=1)
         # 识别到两次一致的结果就退出循环
         for _ in range(10):
             ocr_result_map = self.ocr(self.ctx.controller.screenshot(), '模拟宇宙', '差分宇宙-积分奖励')
@@ -156,8 +156,8 @@ class SimUniApp(SrApplication):
         # 如果只要求打满奖励, 识别是否 14000/14000了
         if self.ctx.sim_uni_config.only_points_reward:
             points_reward = self._check_points_reward()
-            if points_reward.result == OperationRoundResultEnum.SUCCESS:
-                return self.round_by_op_result(self.op_success("成功"))
+            if points_reward.result != OperationRoundResultEnum.FAIL:
+                return points_reward
 
         work_dir = os_utils.get_work_dir()
         plugin_path = os.path.join(work_dir, *['plugins', 'Auto_Simulated_Universe'])
