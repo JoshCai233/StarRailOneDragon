@@ -94,11 +94,21 @@ class SimUniChooseBless(SrOperation):
         else:
             self.ctx.controller.click(target_bless_pos.rect.center)
             time.sleep(0.25)
+
+            result = self.round_by_ocr_and_click(
+                screen=screen,
+                target_cn='确认',
+            )
+            if result.is_success:
+                return self.round_success(status=result.status, wait=0.1)
+
             # 选择祝福时先点右下角再点中间, 防止点到查看已有方程
             confirm_point = SimUniChooseBless.CONFIRM_BTN.center
+            log.info('选择祝福后未识别到确认 尝试固定位置点击 右下角')
             self.ctx.controller.click(confirm_point)
             time.sleep(0.28)
             confirm_point = SimUniChooseBless.CONFIRM_BEFORE_LEVEL_BTN.center
+            log.info('选择祝福后未识别到确认 尝试固定位置点击 中间')
             self.ctx.controller.click(confirm_point)
             self.choose_bless_time = time.time()
             return self.round_success(wait=0.1)
