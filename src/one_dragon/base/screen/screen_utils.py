@@ -1,8 +1,11 @@
+from __future__ import annotations
+
+from enum import Enum
+from typing import TYPE_CHECKING, List, Optional
+
 import cv2
 import numpy as np
 from cv2.typing import MatLike
-from enum import Enum
-from typing import Optional, List
 
 from one_dragon.base.geometry.point import Point
 from one_dragon.base.matcher.match_result import MatchResultList
@@ -11,6 +14,9 @@ from one_dragon.base.screen.screen_area import ScreenArea
 from one_dragon.base.screen.screen_info import ScreenInfo
 from one_dragon.utils import cv2_utils, str_utils
 from one_dragon.utils.i18_utils import gt
+
+if TYPE_CHECKING:
+    from one_dragon.base.operation.one_dragon_context import OneDragonContext
 
 
 class OcrClickResultEnum(Enum):
