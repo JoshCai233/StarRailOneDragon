@@ -117,10 +117,10 @@ area_list:
 - area_name: 无名勋礼-开启无名勋礼
   id_mark: false
   pc_rect:
-  - 1437
-  - 763
-  - 1600
-  - 800
+  - 1037
+  - 563
+  - 1800
+  - 1000
   text: 开启无名勋礼
   lcs_percent: 0.5
   template_sub_dir: ''
