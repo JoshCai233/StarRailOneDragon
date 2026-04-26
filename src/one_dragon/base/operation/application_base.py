@@ -141,7 +141,13 @@ class Application(Operation):
         send_image = getattr(self.ctx.push_config, 'send_image', False)
         image = image_source if send_image else None
 
-        message = f"{gt('任务「')}{app_name}{gt('」运行')}{status}\n"
+        # 推送消息时添加用户信息
+        instance_name = self.ctx.one_dragon_config.current_active_instance.name
+        if len(instance_name) > 2:
+            instance_name = instance_name[:1] + "*" * 3 + instance_name[-2:]
+        elif len(instance_name) > 1:
+            instance_name = "*" + instance_name[-1:]
+        message = f"[{instance_name}] {gt('任务')}「{app_name}」{gt('运行')}{status}\n"
 
         pusher = Push(self.ctx)
         _notify_executor.submit(pusher.send, message, image)
