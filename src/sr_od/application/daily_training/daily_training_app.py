@@ -94,7 +94,7 @@ class DailyTrainingApp(SrApplication):
         completed = phone_menu_utils.is_training_reward_completed(self.ctx, self.screenshot())
         if not completed:
             return self.round_fail('每日实训还未完成')
-        return self.round_success('每日实训已完成', wait=1)
+        return self.round_success('每日实训已完成')
 
     @node_from(from_name='领取奖励')
     @node_notify(when=NotifyTiming.CURRENT_DONE)
