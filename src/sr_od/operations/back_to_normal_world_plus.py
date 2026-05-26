@@ -146,7 +146,7 @@ class BackToNormalWorldPlus(SrOperation):
         return self.round_wait(result.status, wait=1)
 
     def sim_uni_exit(self, is_in_x: bool) -> OperationRoundResult:
-        op = SimUniExit(self.ctx, is_in_x)
+        op = SimUniExit(self.ctx, is_in_x, temporarily_leave=True)
         op_result = op.execute()
         if op_result.success:
             return self.round_wait(wait=1)
