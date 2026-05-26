@@ -87,7 +87,7 @@ class SimUniApp(SrApplication):
             return self.round_success(SimUniApp.PREPARE_TO_RUN)
 
     @node_from(from_name='检查运行次数', status=PREPARE_TO_RUN)
-    @node_from(from_name='调用差分宇宙自动化', success=False)
+    @node_from(from_name='调用差分宇宙自动化')
     @operation_node(name='识别初始画面')
     def _check_initial_screen(self) -> OperationRoundResult:
         screen = self.last_screenshot
@@ -160,22 +160,23 @@ class SimUniApp(SrApplication):
     @operation_node(name='调用差分宇宙自动化')
     def _execute_sim_universe_x(self) -> OperationRoundResult:
         work_dir = os_utils.get_work_dir()
-        plugin_path = os.path.join(work_dir, *['plugins', 'Auto_Simulated_Universe'])
-        script_file = os.path.join(plugin_path, 'diver.py')
-        if not os.path.exists(plugin_path):
-            return self.round_fail(f'差分宇宙插件目录不存在: {plugin_path}')
+        parent_dir = os.path.dirname(work_dir)  # 上一级目录
+        march7th_assistant_path = os.path.join(parent_dir, *['March7thAssistant'])
+        script_file = os.path.join(march7th_assistant_path, 'March7thLauncher.exe')
+        if not os.path.exists(march7th_assistant_path):
+            return self.round_fail(f'三月七助手目录不存在: {march7th_assistant_path}')
         if not os.path.exists(script_file):
-            return self.round_fail(f'差分宇宙脚本不存在: {script_file}')
+            return self.round_fail(f'三月七助手脚本不存在: {script_file}')
 
         # (前面带一个空格) 运行参数
-        args: str = ' --speed --cpu'  # 强制使用cpu避免卡死机
-        script_file += args
+        # args: str = ' -e daily'
+        args: str = ' -e divergent'
 
         # 使用自身的 python 环境链式启动脚本
         script_config = ScriptConfig(
-            script_path=self.ctx.python_service.env_config.python_path,
-            script_arguments=script_file,
-            script_working_directory=plugin_path,
+            script_path=script_file,
+            script_arguments=args,
+            script_working_directory=march7th_assistant_path,
             script_process_name='None',  # 脚本退出检测需要使用 pid 而不是 python.exe, 故此处填 None
             game_process_name='',
             run_timeout_seconds=2000,
@@ -186,25 +187,25 @@ class SimUniApp(SrApplication):
             notify_start=False,
             notify_done=False,
         )
-        BackToNormalWorldPlus(self.ctx).execute()
+        # BackToNormalWorldPlus(self.ctx).execute()
 
-        # 删除运行记录
-        plugin_run_result_path = os.path.join(plugin_path, 'logs', 'notif.txt')
-        if os.path.exists(plugin_run_result_path):
-            with open(plugin_run_result_path, 'w', encoding='utf-8') as file:
-                pass  # 不写入任何内容, 仅清空
-            # os.remove(plugin_run_result_path)
-
-        # 复制配置文件
-        config_file_path = os.path.join(work_dir,
-                                        *['config', '%02d' % self.ctx.current_instance_idx, 'sim_universe_plugin.yml'])
-        # 如果没有此用户的配置文件, 则复制默认配置文件到用户文件夹中; 默认 info.yml 存在
-        plugin_config_file_path = os.path.join(plugin_path, 'info.yml')
-        if not os.path.exists(plugin_config_file_path):
-            return self.round_fail(f'差分宇宙默认配置文件不存在: {plugin_config_file_path}')
-        if not os.path.exists(config_file_path):
-            shutil.copy(plugin_config_file_path, config_file_path)
-        shutil.copy(config_file_path, plugin_config_file_path)
+        # # 删除运行记录
+        # plugin_run_result_path = os.path.join(plugin_path, 'logs', 'notif.txt')
+        # if os.path.exists(plugin_run_result_path):
+        #     with open(plugin_run_result_path, 'w', encoding='utf-8') as file:
+        #         pass  # 不写入任何内容, 仅清空
+        #     # os.remove(plugin_run_result_path)
+        #
+        # # 复制配置文件
+        # config_file_path = os.path.join(work_dir,
+        #                                 *['config', '%02d' % self.ctx.current_instance_idx, 'sim_universe_plugin.yml'])
+        # # 如果没有此用户的配置文件, 则复制默认配置文件到用户文件夹中; 默认 info.yml 存在
+        # plugin_config_file_path = os.path.join(plugin_path, 'info.yml')
+        # if not os.path.exists(plugin_config_file_path):
+        #     return self.round_fail(f'差分宇宙默认配置文件不存在: {plugin_config_file_path}')
+        # if not os.path.exists(config_file_path):
+        #     shutil.copy(plugin_config_file_path, config_file_path)
+        # shutil.copy(config_file_path, plugin_config_file_path)
 
         # 运行脚本, 重试次数 = 3
         retry_count = 0
@@ -224,26 +225,8 @@ class SimUniApp(SrApplication):
                 continue
             retry_count += 1
 
-            # 进程退出, 检查运行情况
-            for _ in range(3):
-                try:
-                    with open(plugin_run_result_path, 'r', encoding='utf-8') as file:
-                        line = file.readline().strip()
-                        completed_num = int(line) if line else 0
-                    break
-                except (ValueError, FileNotFoundError) as e:
-                    log.error(f'读取运行结果文件失败: {e}')
-                    completed_num = 0
-                    time.sleep(5)
-
-            if completed_num > 0:
-                # 记录完成次数, 返回失败然后下次运行即可领奖励
-                self.ctx.sim_uni_record.add_elite_times()
-                return self.round_by_op_result(self.op_fail("已打完, 前往领奖励"))
-
-        op = BackToNormalWorldPlus(self.ctx)
-        op.execute()
-        return self.round_by_op_result(self.op_fail("失败"))
+        # 进程退出
+        return self.round_success()
 
     @node_from(from_name='识别初始画面', status=sim_uni_screen_state.ScreenState.SIM_TYPE_NORMAL.value)  # 最开始已经在模拟宇宙入口了
     @node_from(from_name='传送', status=sim_uni_screen_state.ScreenState.SIM_TYPE_NORMAL.value)
@@ -322,7 +305,6 @@ class SimUniApp(SrApplication):
 
     @node_from(from_name='识别初始画面', status=STATUS_TO_WEEKLY_REWARD)
     @node_from(from_name='检查积分奖励', status=STATUS_ALL_FINISHED)
-    @node_from(from_name='调用差分宇宙自动化', success=True)
     @operation_node(name='领取每周奖励')
     def check_reward_before_exit(self) -> OperationRoundResult:
         op = SimUniClaimWeeklyReward(self.ctx)
