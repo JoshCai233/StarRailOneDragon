@@ -207,10 +207,8 @@ class SimUniApp(SrApplication):
         #     shutil.copy(plugin_config_file_path, config_file_path)
         # shutil.copy(config_file_path, plugin_config_file_path)
 
-        # 运行脚本, 重试次数 = 3
-        retry_count = 0
-        max_retries = 3
-        while retry_count < max_retries:
+        # 运行脚本
+        while True:
             # auto_simulated_universe 运行前, 检查是否按了暂停/停止
             if self.ctx.run_context.is_context_stop:
                 break
@@ -223,7 +221,9 @@ class SimUniApp(SrApplication):
             if self.ctx.run_context.is_context_pause:
                 time.sleep(1)
                 continue
-            retry_count += 1
+            # 脚本结束, 回到大世界并检查完成情况
+            BackToNormalWorldPlus(self.ctx).execute()
+            break
 
         # 进程退出
         return self.round_success()
