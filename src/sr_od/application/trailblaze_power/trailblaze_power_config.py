@@ -177,7 +177,7 @@ class TrailblazePowerConfig(YamlConfig):
                     'diff': i.diff
                 })
 
-        data['history_teams'] = history_teams
+        data['history_teams'] = []
         data['loop'] = self.loop
 
         self.data = data
