@@ -15,10 +15,10 @@ from qfluentwidgets import (
     PrimaryPushButton,
     PushButton,
     SettingCardGroup,
-    ToolButton,
+    ToolButton, SwitchButton, IndicatorPosition,
 )
 
-from one_dragon.base.config.game_account_config import GameAccountConfig, GameRegionEnum
+from one_dragon.base.config.game_account_config import GameRegionEnum
 from one_dragon.base.config.one_dragon_config import (
     OneDragonInstance,
     RunInOneDragonApp,
@@ -59,17 +59,28 @@ class InstanceSettingCard(MultiPushSettingCard):
         self.instance_name_input.textChanged.connect(self._on_name_changed)
 
         self.run_opt = ComboBox()
-        run_idx = 0
         target_idx = 0
-        for opt_enum in RunInOneDragonApp:
+        for run_idx, opt_enum in enumerate(RunInOneDragonApp):
             opt = opt_enum.value
             self.run_opt.addItem(text=opt.label, userData=opt.value)
             if opt.value == self.instance.active_in_od:
                 target_idx = run_idx
-
-            run_idx += 1
         self.run_opt.setCurrentIndex(target_idx)
         self.run_opt.currentIndexChanged.connect(self._on_run_changed)
+        btn_list = [
+            self.instance_name_input,
+            self.run_opt,
+        ]
+
+        self.mark_btn_list: list[SwitchButton] = []
+        for i in range(1):
+            btn = SwitchButton(indicatorPos=IndicatorPosition.RIGHT)
+            btn.onText = '标记'
+            btn.offText = '标记'
+            btn.setChecked(self.instance.marked[i])
+            self.mark_btn_list.append(btn)
+            btn.checkedChanged.connect(self._on_mark_btn_list_changed)
+            btn_list.append(btn)
 
         self.active_btn = PushButton(text=gt("启用"))
         self.active_btn.clicked.connect(self._on_active_clicked)
@@ -79,16 +90,14 @@ class InstanceSettingCard(MultiPushSettingCard):
         self.delete_btn = ToolButton(FluentIcon.DELETE, parent=None)
         self.delete_btn.clicked.connect(self._on_delete_clicked)
 
+        btn_list.append(self.active_btn)
+        btn_list.append(self.login_btn)
+        btn_list.append(self.delete_btn)
+
         MultiPushSettingCard.__init__(
             self,
-            btn_list=[
-                self.instance_name_input,
-                self.run_opt,
-                self.active_btn,
-                self.login_btn,
-                self.delete_btn,
-            ],
-            title="%02d" % self.instance.idx,
+            btn_list=btn_list,
+            title=f"{self.instance.idx:02d}",
             icon=FluentIcon.PEOPLE,
         )
         self.update_title()
@@ -97,7 +106,7 @@ class InstanceSettingCard(MultiPushSettingCard):
         """
         更新显示文本
         """
-        title = "%02d" % self.instance.idx
+        title = f"{self.instance.idx:02d}"
         if self.instance.active:
             title += " " + gt("当前")
         self.setTitle(title)
@@ -117,7 +126,11 @@ class InstanceSettingCard(MultiPushSettingCard):
         self.login.emit(self.instance.idx)
 
     def _on_delete_clicked(self) -> None:
-        self.delete.emit(self.instance.idx)
+        _mb = MessageBox(gt('警告'), gt('确定要删除吗'), self.parent())
+        _mb.yesButton.setText(gt("确定"))
+        _mb.cancelButton.setText(gt("取消"))
+        if _mb.exec():
+            self.delete.emit(self.instance.idx)
 
     def check_active(self, active_idx: int) -> None:
         """
@@ -129,6 +142,12 @@ class InstanceSettingCard(MultiPushSettingCard):
         self.update_title()
         self.active_btn.setDisabled(active)
 
+    def _on_mark_btn_list_changed(self) -> None:
+        marked = []
+        for i in range(len(self.mark_btn_list)):
+            marked.append(self.mark_btn_list[i].checked)
+        self.instance.marked = marked
+        self.changed.emit(self.instance)
 
 class SettingInstanceInterface(VerticalScrollInterface):
 
