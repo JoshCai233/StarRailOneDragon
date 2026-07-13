@@ -64,7 +64,7 @@ class DailyTrainingApp(SrApplication):
 
         result = self.round_by_ocr_and_click_by_priority(target_cn_list, ignore_cn_list=ignore_cn_list)
         if result.is_success:
-            return self.round_wait(status=result.status, wait=1)
+            return self.round_wait(status=result.status, wait=0.5)
         else:
             return self.round_retry(status=result.status, wait=0.5)
 
