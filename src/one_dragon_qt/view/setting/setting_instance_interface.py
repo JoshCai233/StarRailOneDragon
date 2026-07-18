@@ -77,7 +77,7 @@ class InstanceSettingCard(MultiPushSettingCard):
             btn = SwitchButton(indicatorPos=IndicatorPosition.RIGHT)
             btn.onText = '标记'
             btn.offText = '标记'
-            btn.setChecked(self.instance.marked[i])
+            btn.setChecked(self.instance.marks[i])
             self.mark_btn_list.append(btn)
             btn.checkedChanged.connect(self._on_mark_btn_list_changed)
             btn_list.append(btn)
@@ -143,10 +143,10 @@ class InstanceSettingCard(MultiPushSettingCard):
         self.active_btn.setDisabled(active)
 
     def _on_mark_btn_list_changed(self) -> None:
-        marked = []
+        marks = []
         for i in range(len(self.mark_btn_list)):
-            marked.append(self.mark_btn_list[i].checked)
-        self.instance.marked = marked
+            marks.append(self.mark_btn_list[i].checked)
+        self.instance.marks = marks
         self.changed.emit(self.instance)
 
 class SettingInstanceInterface(VerticalScrollInterface):
